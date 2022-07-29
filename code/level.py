@@ -130,6 +130,14 @@ class Level:
 
                     print('WON')
 
+    def shade_selected_tile(self):
+
+        if self.selected_tile:
+            shade = pygame.surface.Surface((self.selected_tile.rect.width, self.selected_tile.rect.height))
+            shade.fill('black')
+            shade.set_alpha(75)
+            pygame.Surface.blit(self.display_surface, shade, self.selected_tile.rect)
+
     # DEBUG
     def display_exit_point(self, color='green'):
         pygame.draw.circle(self.display_surface, color, self.exit_point, 5)
@@ -141,6 +149,7 @@ class Level:
 
         self.board.draw(self.display_surface)
         self.tiles.draw(self.display_surface)
+        self.shade_selected_tile()
 
         self.input()
         self.check_win()
