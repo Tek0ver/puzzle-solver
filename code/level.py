@@ -5,7 +5,7 @@ from settings import tile_size
 
 
 class Level:
-    def __init__(self, display_surface, board_dimensions, tiles_map, exit_point):
+    def __init__(self, display_surface, board_dimensions, border_thickness,tiles_map, exit_point):
 
         self.display_surface = display_surface
 
@@ -17,7 +17,6 @@ class Level:
         self.last_key_timer = pygame.time.get_ticks()
 
         # make board borders
-        border_thickness = 20
         self.board = pygame.sprite.GroupSingle()
         self.board.add(Board(border_thickness, board_dimensions))
 
@@ -81,7 +80,7 @@ class Level:
         if self.check_move(dir):
             self.selected_tile.rect.move_ip(x, y)
 
-    def check_move(self, dir):
+    def check_move(self, dir: tuple[int]) -> bool:
         
         x, y = self.transform_dir(dir)
 

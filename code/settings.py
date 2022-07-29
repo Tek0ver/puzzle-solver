@@ -1,8 +1,7 @@
 tile_size = 64
-screen_width = 500
-screen_height = 500
 
 board_dimensions = (4,5) # how many tiles of 1x1 on width and height
+border_thickness = 20
 
 # True for the goal tile
 tiles_map = [
