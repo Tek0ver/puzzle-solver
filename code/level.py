@@ -5,11 +5,16 @@ from settings import tile_size
 
 
 class Level:
-    def __init__(self, display_surface, board_dimensions, border_thickness,tiles_map, exit_point):
+    def __init__(self, display_surface, board_dimensions, border_thickness,tiles_map, exit_point, restart_level):
 
         self.display_surface = display_surface
+        self.restart_level = restart_level
 
         self.selected_tile = None
+        self.move_count = 0
+
+        # text
+        self.font= pygame.font.Font(None, 30)
 
         # keyboard input
         self.delay = 400
@@ -47,7 +52,7 @@ class Level:
         if button3:
             self.selected_tile = None
 
-        # keyboard mouvement
+        # keyboard mouvement timer
         if not self.allow_keyboard_input:
             current_time = pygame.time.get_ticks()
             if current_time - self.last_key_timer >= self.delay:
@@ -55,6 +60,11 @@ class Level:
                 self.allow_keyboard_input = True
 
         keys = pygame.key.get_pressed()
+        # menu / restart / options...
+        if keys[pygame.K_r]:
+            self.restart_level()
+
+        # keyboard mouvement
         if self.selected_tile and self.allow_keyboard_input:
             moved = False
             if keys[pygame.K_UP]:
@@ -79,6 +89,7 @@ class Level:
         x, y = self.transform_dir(dir)
         if self.check_move(dir):
             self.selected_tile.rect.move_ip(x, y)
+            self.move_count += 1
 
     def check_move(self, dir: tuple[int]) -> bool:
         
@@ -127,8 +138,13 @@ class Level:
         for tile in self.tiles.sprites():
             if tile.goal_tile is True:
                 if tile.rect.topleft == self.exit_point:
-
-                    print('WON')
+                    text = f"You won, in {self.move_count} moves"
+                    text_surf = self.font.render(text, True, 'black')
+                    text_rect = text_surf.get_rect(center = (
+                        self.display_surface.get_width() / 2,
+                        self.display_surface.get_height() / 3)
+                    )
+                    self.display_surface.blit(text_surf, text_rect)
 
     def shade_selected_tile(self):
 
@@ -137,6 +153,13 @@ class Level:
             shade.fill('black')
             shade.set_alpha(75)
             pygame.Surface.blit(self.display_surface, shade, self.selected_tile.rect)
+
+    def display_number_of_moves(self):
+        text = f"Moves : {self.move_count}"
+        text_surf = self.font.render(text, True, 'black')
+        pos = (5,self.display_surface.get_height())
+        text_rect = text_surf.get_rect(bottomleft = pos)
+        self.display_surface.blit(text_surf, text_rect)
 
     # DEBUG
     def display_exit_point(self, color='green'):
@@ -150,6 +173,7 @@ class Level:
         self.board.draw(self.display_surface)
         self.tiles.draw(self.display_surface)
         self.shade_selected_tile()
+        self.display_number_of_moves()
 
         self.input()
         self.check_win()

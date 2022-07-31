@@ -5,6 +5,10 @@ from level import Level
 
 pygame.init()
 
+def start_level():
+    global level
+    level = Level(screen, board_dimensions, border_thickness, tiles_map, exit_point, start_level)
+
 # dynamic window dimensions
 goal_tile = [tile for tile in tiles_map if tile[4] is True]
 goal_tile_dimensions = (goal_tile[0][0], goal_tile[0][1])
@@ -14,7 +18,7 @@ screen_height = board_dimensions[1] * tile_size + 2 * border_thickness + goal_ti
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 
-level = Level(screen, board_dimensions, border_thickness, tiles_map, exit_point)
+start_level()
 
 while True:
     for event in pygame.event.get():
