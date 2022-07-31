@@ -87,29 +87,29 @@ class Level:
 
     def move_selected_tile(self, dir):
         x, y = self.transform_dir(dir)
-        if self.check_move(dir):
+        if self.check_move(self.selected_tile, dir):
             self.selected_tile.rect.move_ip(x, y)
             self.move_count += 1
 
-    def check_move(self, dir: tuple[int]) -> bool:
+    def check_move(self, tile, dir: tuple[int]) -> bool:
         
         x, y = self.transform_dir(dir)
 
         can_move = True
 
         # board collision
-        if self.selected_tile.goal_tile:
+        if tile.goal_tile:
             walls = self.board.sprite.collision_rects
         else:
             walls = self.board.sprite.collision_rects + [self.board.sprite.exit_rect]
 
-        if self.selected_tile.rect.move(x, y).collidelist(walls) != -1:
+        if tile.rect.move(x, y).collidelist(walls) != -1:
             can_move = False
 
         # tiles collision
-        next_tile_pos = self.selected_tile.rect.move(x, y)
+        next_tile_pos = tile.rect.move(x, y)
         tile_rect_list = [sprite.rect for sprite in self.tiles.sprites()]
-        tile_rect_list.remove(self.selected_tile.rect)
+        tile_rect_list.remove(tile.rect)
         if next_tile_pos.collidelist(tile_rect_list) != -1:
             can_move = False
 
@@ -146,13 +146,13 @@ class Level:
                     )
                     self.display_surface.blit(text_surf, text_rect)
 
-    def shade_selected_tile(self):
+    def shade_tile(self, tile, color='black'):
 
-        if self.selected_tile:
-            shade = pygame.surface.Surface((self.selected_tile.rect.width, self.selected_tile.rect.height))
-            shade.fill('black')
+        if tile:
+            shade = pygame.surface.Surface((tile.rect.width, tile.rect.height))
+            shade.fill(color)
             shade.set_alpha(75)
-            pygame.Surface.blit(self.display_surface, shade, self.selected_tile.rect)
+            pygame.Surface.blit(self.display_surface, shade, tile.rect)
 
     def display_number_of_moves(self):
         text = f"Moves : {self.move_count}"
@@ -161,18 +161,34 @@ class Level:
         text_rect = text_surf.get_rect(bottomleft = pos)
         self.display_surface.blit(text_surf, text_rect)
 
+    def find_movable_tiles(self):
+        movable_tiles = []
+        dirs = ['up', 'down', 'left', 'right']
+        for tile in self.tiles:
+            movable = False
+            for dir in dirs:
+                if self.check_move(tile, dir):
+                    movable = True
+            if movable:
+                movable_tiles.append(tile)
+        
+        return movable_tiles
+
     # DEBUG
     def display_exit_point(self, color='green'):
         pygame.draw.circle(self.display_surface, color, self.exit_point, 5)
     def display_walls(self, color='red'):
         for rect in self.board.sprite.collision_rects:
             pygame.draw.rect(self.display_surface, color, rect)
+    def shade_movable_tiles(self, color='red'):
+        for tile in self.find_movable_tiles():
+            self.shade_tile(tile, color)
 
     def run(self):
 
         self.board.draw(self.display_surface)
         self.tiles.draw(self.display_surface)
-        self.shade_selected_tile()
+        self.shade_tile(self.selected_tile)
         self.display_number_of_moves()
 
         self.input()
