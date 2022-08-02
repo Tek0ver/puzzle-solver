@@ -2,6 +2,7 @@ from operator import truediv
 import pygame
 from tiles import Tile, Board
 from settings import tile_size
+from ui import UI
 
 
 class Level:
@@ -12,9 +13,14 @@ class Level:
 
         self.selected_tile = None
         self.move_count = 0
+        self.animation = False
+        self.moving_tile = None
+        self.moving_tile_end_pos = None
+        self.moving = False
 
-        # text
-        self.font= pygame.font.Font(None, 30)
+        # ui
+        topright_x_board = board_dimensions[0] * tile_size + 2 * border_thickness
+        self.ui = UI(self.display_surface, topright_x_board)
 
         # keyboard input
         self.delay = 400
@@ -61,11 +67,21 @@ class Level:
 
         keys = pygame.key.get_pressed()
         # menu / restart / options...
-        if keys[pygame.K_r]:
-            self.restart_level()
+        if self.allow_keyboard_input:
+            if keys[pygame.K_r]:
+                self.allow_keyboard_input = False
+                self.last_key_timer = pygame.time.get_ticks()
+                self.restart_level()
+            if keys[pygame.K_a]:
+                self.allow_keyboard_input = False
+                self.last_key_timer = pygame.time.get_ticks()
+                if self.animation:
+                    self.animation = False
+                else:
+                    self.animation = True
 
         # keyboard mouvement
-        if self.selected_tile and self.allow_keyboard_input:
+        if self.selected_tile and self.allow_keyboard_input and self.moving is False:
             moved = False
             if keys[pygame.K_UP]:
                 move_dir = 'up'
@@ -81,15 +97,19 @@ class Level:
                 moved = True
 
             if moved:
-                self.move_selected_tile(move_dir)
+                self.move_tile(self.selected_tile, move_dir)
                 self.allow_keyboard_input = False
                 self.last_key_timer = pygame.time.get_ticks()
 
-    def move_selected_tile(self, dir):
+    def move_tile(self, tile, dir):
+
         x, y = self.transform_dir(dir)
-        if self.check_move(self.selected_tile, dir):
-            self.selected_tile.rect.move_ip(x, y)
+        if self.check_move(tile, dir):
+            self.moving_tile_end_pos = tile.rect.move(x, y).topleft
             self.move_count += 1
+            self.moving_tile = tile
+            self.moving = True
+
 
     def check_move(self, tile, dir: tuple[int]) -> bool:
         
@@ -154,13 +174,6 @@ class Level:
             shade.set_alpha(75)
             pygame.Surface.blit(self.display_surface, shade, tile.rect)
 
-    def display_number_of_moves(self):
-        text = f"Moves : {self.move_count}"
-        text_surf = self.font.render(text, True, 'black')
-        pos = (5,self.display_surface.get_height())
-        text_rect = text_surf.get_rect(bottomleft = pos)
-        self.display_surface.blit(text_surf, text_rect)
-
     def find_movable_tiles(self):
         movable_tiles = []
         dirs = ['up', 'down', 'left', 'right']
@@ -173,6 +186,29 @@ class Level:
                 movable_tiles.append(tile)
         
         return movable_tiles
+
+    def update_tile(self):
+        if self.moving_tile:
+            if self.animation:
+
+                speed = 5
+
+                start = pygame.math.Vector2(self.moving_tile.rect.topleft)
+                end = pygame.math.Vector2(self.moving_tile_end_pos)
+
+                vec = (end - start)
+
+                self.moving_tile.rect.topleft += vec.normalize() * speed
+
+                if vec.length() < speed:
+                    self.moving_tile.rect.topleft = self.moving_tile_end_pos
+                    self.moving_tile = None
+                    self.moving = False
+
+            else:
+                self.moving_tile.rect.topleft = self.moving_tile_end_pos
+                self.moving_tile = None
+                self.moving = False
 
     # DEBUG
     def display_exit_point(self, color='green'):
@@ -189,7 +225,8 @@ class Level:
         self.board.draw(self.display_surface)
         self.tiles.draw(self.display_surface)
         self.shade_tile(self.selected_tile)
-        self.display_number_of_moves()
+        self.ui.run(self.move_count, self.animation)
 
         self.input()
+        self.update_tile()
         self.check_win()

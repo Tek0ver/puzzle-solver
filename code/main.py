@@ -12,7 +12,8 @@ def start_level():
 # dynamic window dimensions
 goal_tile = [tile for tile in tiles_map if tile[4] is True]
 goal_tile_dimensions = (goal_tile[0][0], goal_tile[0][1])
-screen_width = board_dimensions[0] * tile_size + 2 * border_thickness
+ui_width = 300
+screen_width = board_dimensions[0] * tile_size + 2 * border_thickness + ui_width
 screen_height = board_dimensions[1] * tile_size + 2 * border_thickness + goal_tile_dimensions[1] * tile_size
 
 screen = pygame.display.set_mode((screen_width, screen_height))
